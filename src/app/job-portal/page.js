@@ -13,20 +13,25 @@ import AdminPage from "@/components/admin-page";
 import UserPage from "@/components/user-page";
 
 export default function JobPortalPage() {
-  const [user, setUser] = useState(null);
   const router = useRouter();
+  const [user, setUser] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("user");
+    }
+    return null;
+  });
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedUser = localStorage.getItem("user");
-      setUser(storedUser);
+    if (typeof window !== "undefined" && !user) {
+      router.push("/login");
     }
-  }, []);
+  }, [user, router]);
 
   const handleSignOut = () => {
     localStorage.clear();
+    document.cookie = "user=; path=/; max-age=0";
     setUser(null);
-    router.push("/"); // or window.location.reload();
+    router.push("/login");
   };
 
   return (
