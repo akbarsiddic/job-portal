@@ -21,10 +21,10 @@ export default function Home() {
 
     if (email === "admin" && password === "admin123") {
       localStorage.setItem("user", "admin");
-      router.push("/job-portal/admin");
+      router.push("/job-portal");
     } else if (email === "user" && password === "user") {
       localStorage.setItem("user", "user");
-      router.push("/job-portal/user");
+      router.push("/job-portal");
     } else {
       setError("Email atau password salah");
     }
