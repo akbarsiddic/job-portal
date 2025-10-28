@@ -2,6 +2,24 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export default function AdminPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -33,9 +51,7 @@ export default function AdminPage() {
     },
   });
 
-  const openDialog = () => setIsDialogOpen(true);
-  const closeDialog = () => {
-    setIsDialogOpen(false);
+  const resetFormData = () => {
     setFormData({
       jobName: "",
       jobType: "",
@@ -54,6 +70,13 @@ export default function AdminPage() {
         dateOfBirth: "Mandatory",
       },
     });
+  };
+
+  const handleDialogOpenChange = (open) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      resetFormData();
+    }
   };
 
   const handleInputChange = (field, value) => {
@@ -84,7 +107,8 @@ export default function AdminPage() {
       localStorage.setItem("jobPostings", JSON.stringify(updatedJobs));
     }
     
-    closeDialog();
+    setIsDialogOpen(false);
+    resetFormData();
   };
 
   const handleDeleteJob = (jobId) => {
@@ -105,10 +129,10 @@ export default function AdminPage() {
             {/* Search Bar */}
             <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
               <div className="relative">
-                <input
+                <Input
                   type="text"
                   placeholder="Search by job details"
-                  className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="pr-12"
                 />
                 <button className="absolute right-3 top-1/2 transform -translate-y-1/2">
                   <svg
@@ -148,7 +172,7 @@ export default function AdminPage() {
                 </p>
                 {/* CTA Button */}
                 <button
-                  onClick={openDialog}
+                  onClick={() => setIsDialogOpen(true)}
                   className="px-8 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold rounded-lg transition-colors shadow-sm"
                 >
                   Create a new job
@@ -252,7 +276,7 @@ export default function AdminPage() {
                 Create jobs, invite, and hire with ease
               </p>
               <button
-                onClick={openDialog}
+                onClick={() => setIsDialogOpen(true)}
                 className="w-full px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg transition-colors"
               >
                 Create a new job
@@ -263,210 +287,186 @@ export default function AdminPage() {
       </div>
 
       {/* Dialog Modal */}
-      {isDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            {/* Dialog Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">
-                Job Opening
-              </h2>
-              <button
-                onClick={closeDialog}
-                className="text-gray-400 hover:text-gray-600"
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Job Opening</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Job Name */}
+            <div className="space-y-2">
+              <Label htmlFor="jobName">
+                Job Name<span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="jobName"
+                type="text"
+                placeholder="Ex. Front End Engineer"
+                value={formData.jobName}
+                onChange={(e) => handleInputChange("jobName", e.target.value)}
+              />
+            </div>
+
+            {/* Job Type */}
+            <div className="space-y-2">
+              <Label htmlFor="jobType">
+                Job Type<span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={formData.jobType}
+                onValueChange={(value) => handleInputChange("jobType", value)}
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+                <SelectTrigger id="jobType" className="w-full">
+                  <SelectValue placeholder="Select job type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Full-Time">Full-Time</SelectItem>
+                  <SelectItem value="Part-Time">Part-Time</SelectItem>
+                  <SelectItem value="Contract">Contract</SelectItem>
+                  <SelectItem value="Internship">Internship</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Job Description */}
+            <div className="space-y-2">
+              <Label htmlFor="jobDescription">
+                Job Description<span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="jobDescription"
+                placeholder="Ex."
+                value={formData.jobDescription}
+                onChange={(e) =>
+                  handleInputChange("jobDescription", e.target.value)
+                }
+                rows={4}
+              />
+            </div>
+
+            {/* Number of Candidate Needed */}
+            <div className="space-y-2">
+              <Label htmlFor="candidateNeeded">
+                Number of Candidate Needed
+                <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="candidateNeeded"
+                type="text"
+                placeholder="Ex. 2"
+                value={formData.candidateNeeded}
+                onChange={(e) =>
+                  handleInputChange("candidateNeeded", e.target.value)
+                }
+              />
+            </div>
+
+            {/* Job Salary */}
+            <div className="space-y-4">
+              <Label>Job Salary</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minSalary" className="text-sm text-gray-600">
+                    Minimum Estimated Salary
+                  </Label>
+                  <Input
+                    id="minSalary"
+                    type="text"
+                    placeholder="Rp 7.000.000"
+                    value={formData.minSalary}
+                    onChange={(e) =>
+                      handleInputChange("minSalary", e.target.value)
+                    }
                   />
-                </svg>
-              </button>
-            </div>
-
-            {/* Dialog Content */}
-            <div className="p-6 space-y-6">
-              {/* Job Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Name<span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex. Front End Engineer"
-                  value={formData.jobName}
-                  onChange={(e) => handleInputChange("jobName", e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Job Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Type<span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.jobType}
-                  onChange={(e) => handleInputChange("jobType", e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent appearance-none bg-white"
-                >
-                  <option value="">Select job type</option>
-                  <option value="Full-Time">Full-Time</option>
-                  <option value="Part-Time">Part-Time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
-                </select>
-              </div>
-
-              {/* Job Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Job Description<span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  placeholder="Ex."
-                  value={formData.jobDescription}
-                  onChange={(e) =>
-                    handleInputChange("jobDescription", e.target.value)
-                  }
-                  rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
-                />
-              </div>
-
-              {/* Number of Candidate Needed */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Number of Candidate Needed
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex. 2"
-                  value={formData.candidateNeeded}
-                  onChange={(e) =>
-                    handleInputChange("candidateNeeded", e.target.value)
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Job Salary */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Job Salary
-                </label>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Minimum Estimated Salary
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Rp 7.000.000"
-                      value={formData.minSalary}
-                      onChange={(e) =>
-                        handleInputChange("minSalary", e.target.value)
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-600 mb-2">
-                      Maximum Estimated Salary
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Rp 8.000.000"
-                      value={formData.maxSalary}
-                      onChange={(e) =>
-                        handleInputChange("maxSalary", e.target.value)
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
-                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxSalary" className="text-sm text-gray-600">
+                    Maximum Estimated Salary
+                  </Label>
+                  <Input
+                    id="maxSalary"
+                    type="text"
+                    placeholder="Rp 8.000.000"
+                    value={formData.maxSalary}
+                    onChange={(e) =>
+                      handleInputChange("maxSalary", e.target.value)
+                    }
+                  />
                 </div>
               </div>
+            </div>
 
-              {/* Minimum Profile Information Required */}
-              <div>
-                <h3 className="text-base font-semibold text-gray-800 mb-4">
-                  Minimum Profile Information Required
-                </h3>
-                <div className="space-y-3">
-                  {Object.entries(formData.profileRequirements).map(
-                    ([key, value]) => (
-                      <div
-                        key={key}
-                        className="flex items-center justify-between py-3 border-b border-gray-200"
-                      >
-                        <span className="text-sm text-gray-700 capitalize">
-                          {key.replace(/([A-Z])/g, " $1").trim()}
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() =>
-                              handleProfileRequirementChange(key, "Mandatory")
-                            }
-                            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                              value === "Mandatory"
-                                ? "bg-teal-600 text-white"
-                                : "bg-white text-teal-600 border border-teal-600 hover:bg-teal-50"
-                            }`}
-                          >
-                            Mandatory
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleProfileRequirementChange(key, "Optional")
-                            }
-                            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                              value === "Optional"
-                                ? "bg-gray-200 text-gray-700"
-                                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            Optional
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleProfileRequirementChange(key, "Off")
-                            }
-                            className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                              value === "Off"
-                                ? "bg-gray-200 text-gray-700"
-                                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-                            }`}
-                          >
-                            Off
-                          </button>
-                        </div>
+            {/* Minimum Profile Information Required */}
+            <div className="space-y-4">
+              <h3 className="text-base font-semibold text-gray-800">
+                Minimum Profile Information Required
+              </h3>
+              <div className="space-y-3">
+                {Object.entries(formData.profileRequirements).map(
+                  ([key, value]) => (
+                    <div
+                      key={key}
+                      className="flex items-center justify-between py-3 border-b border-gray-200"
+                    >
+                      <span className="text-sm text-gray-700 capitalize">
+                        {key.replace(/([A-Z])/g, " $1").trim()}
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() =>
+                            handleProfileRequirementChange(key, "Mandatory")
+                          }
+                          className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                            value === "Mandatory"
+                              ? "bg-teal-600 text-white"
+                              : "bg-white text-teal-600 border border-teal-600 hover:bg-teal-50"
+                          }`}
+                        >
+                          Mandatory
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleProfileRequirementChange(key, "Optional")
+                          }
+                          className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                            value === "Optional"
+                              ? "bg-gray-200 text-gray-700"
+                              : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          Optional
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleProfileRequirementChange(key, "Off")
+                          }
+                          className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                            value === "Off"
+                              ? "bg-gray-200 text-gray-700"
+                              : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          Off
+                        </button>
                       </div>
-                    ),
-                  )}
-                </div>
+                    </div>
+                  ),
+                )}
               </div>
-            </div>
-
-            {/* Dialog Footer */}
-            <div className="flex justify-end p-6 border-t border-gray-200">
-              <button
-                onClick={handlePublish}
-                className="px-8 py-3 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold rounded-lg transition-colors"
-              >
-                Publish Job
-              </button>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              onClick={handlePublish}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-700"
+            >
+              Publish Job
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
