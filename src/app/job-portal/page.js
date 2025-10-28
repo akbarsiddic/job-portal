@@ -14,6 +14,7 @@ import UserPage from "@/components/user-page";
 
 export default function JobPortalPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   const [user, setUser] = useState(() => {
     if (typeof window !== "undefined") {
@@ -28,12 +29,21 @@ export default function JobPortalPage() {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSignOut = () => {
     localStorage.clear();
     document.cookie = "user=; path=/; max-age=0";
     setUser(null);
     router.push("/login");
   };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
