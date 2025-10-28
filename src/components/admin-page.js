@@ -20,9 +20,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
 export default function AdminPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const supabase = createClient();
   const [jobs, setJobs] = useState(() => {
     if (typeof window !== "undefined") {
       const savedJobs = localStorage.getItem("jobPostings");
@@ -93,20 +96,27 @@ export default function AdminPage() {
     }));
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const newJob = {
-      id: Date.now(),
-      ...formData,
-      createdAt: new Date().toISOString(),
+      job_name: formData.jobName,
+      job_type: formData.jobType,
+      job_description: formData.jobDescription,
+      number_of_candidate: Number(formData.candidateNeeded),
+      minimum_salary: formData.minSalary,
+      maximum_salary: formData.maxSalary,
+      fields: formData.profileRequirements,
     };
 
-    const updatedJobs = [...jobs, newJob];
-    setJobs(updatedJobs);
-    
-    if (typeof window !== "undefined") {
-      localStorage.setItem("jobPostings", JSON.stringify(updatedJobs));
+    const { data, error } = await supabase.from("jobs").insert(newJob);
+
+    if (error) {
+      console.error(error);
+      return;
     }
-    
+
+    toast.success("Job published successfully!");
+
+    // setJobs([...jobs, data[0]]);
     setIsDialogOpen(false);
     resetFormData();
   };
@@ -114,7 +124,7 @@ export default function AdminPage() {
   const handleDeleteJob = (jobId) => {
     const updatedJobs = jobs.filter((job) => job.id !== jobId);
     setJobs(updatedJobs);
-    
+
     if (typeof window !== "undefined") {
       localStorage.setItem("jobPostings", JSON.stringify(updatedJobs));
     }
@@ -214,7 +224,9 @@ export default function AdminPage() {
                                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                                 />
                               </svg>
-                              <span>{job.candidateNeeded} candidates needed</span>
+                              <span>
+                                {job.candidateNeeded} candidates needed
+                              </span>
                             </div>
                           )}
                           {(job.minSalary || job.maxSalary) && (

@@ -14,6 +14,7 @@ import UserPage from "@/components/user-page";
 
 export default function JobPortalPage() {
   const router = useRouter();
+
   const [user, setUser] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("user");

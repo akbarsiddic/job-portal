@@ -1,18 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function UserPage() {
-  const [jobs, setJobs] = useState(() => {
-    if (typeof window !== "undefined") {
-      const savedJobs = localStorage.getItem("jobPostings");
-      if (savedJobs) {
-        return JSON.parse(savedJobs);
+  const router = useRouter();
+  const supabase = createClient();
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const { data, error } = await supabase.from("jobs").select("*");
+
+      if (error) {
+        console.error("Error fetching jobs:", error);
+      } else {
+        console.log("Fetched jobs:", data);
+        setJobs(data);
       }
-    }
-    return [];
-  });
+
+      setLoading(false);
+    };
+
+    fetchJobs();
+  }, []);
   const [selectedJob, setSelectedJob] = useState(() => {
     if (typeof window !== "undefined") {
       const savedJobs = localStorage.getItem("jobPostings");
@@ -110,14 +124,12 @@ export default function UserPage() {
                   {/* Job Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                      {job.jobName}
+                      {job.job_name}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {job.jobType}
-                    </p>
+                    <p className="text-sm text-gray-600 mb-4">{job.job_type}</p>
 
                     {/* Candidates Needed */}
-                    {job.candidateNeeded && (
+                    {job.number_of_candidate && (
                       <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                         <svg
                           className="w-4 h-4"
@@ -132,12 +144,12 @@ export default function UserPage() {
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                           />
                         </svg>
-                        <span>{job.candidateNeeded} positions</span>
+                        <span>{job.number_of_candidate} positions</span>
                       </div>
                     )}
 
                     {/* Salary */}
-                    {(job.minSalary || job.maxSalary) && (
+                    {(job.minimum_salary || job.maximum_salary) && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <svg
                           className="w-4 h-4"
@@ -153,9 +165,9 @@ export default function UserPage() {
                           />
                         </svg>
                         <span>
-                          {job.minSalary && job.maxSalary
-                            ? `${job.minSalary} - ${job.maxSalary}`
-                            : job.minSalary || job.maxSalary}
+                          {job.minimum_salary && job.maximum_salary
+                            ? `${job.minimum_salary} - ${job.maximum_salary}`
+                            : job.minimum_salary || job.maximum_salary}
                         </span>
                       </div>
                     )}
@@ -213,36 +225,40 @@ export default function UserPage() {
                     <div>
                       <div className="flex items-center gap-3 mb-2">
                         <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded">
-                          {selectedJob.jobType}
+                          {selectedJob.job_type}
                         </span>
                       </div>
                       <h1 className="text-2xl font-bold text-gray-800 mb-1">
-                        {selectedJob.jobName}
+                        {selectedJob.job_name}
                       </h1>
-                      {selectedJob.candidateNeeded && (
+                      {selectedJob.number_of_candidate && (
                         <p className="text-gray-600">
-                          {selectedJob.candidateNeeded} positions available
+                          {selectedJob.number_of_candidate} positions available
                         </p>
                       )}
                     </div>
                   </div>
 
                   {/* Apply Button */}
-                  <button className="px-8 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold rounded-lg transition-colors shadow-sm">
+                  <button
+                    className="px-8 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold rounded-lg transition-colors shadow-sm"
+                    onClick={() => router.push(`job-portal/${selectedJob.id}`)}
+                  >
                     Apply
                   </button>
                 </div>
 
                 {/* Salary Info */}
-                {(selectedJob.minSalary || selectedJob.maxSalary) && (
+                {(selectedJob.minimum_salary || selectedJob.maximum_salary) && (
                   <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                     <h3 className="text-sm font-semibold text-gray-700 mb-2">
                       Salary Range
                     </h3>
                     <p className="text-lg font-semibold text-gray-800">
-                      {selectedJob.minSalary && selectedJob.maxSalary
-                        ? `${selectedJob.minSalary} - ${selectedJob.maxSalary}`
-                        : selectedJob.minSalary || selectedJob.maxSalary}
+                      {selectedJob.minimum_salary && selectedJob.maximum_salary
+                        ? `${selectedJob.minimum_salary} - ${selectedJob.maximum_salary}`
+                        : selectedJob.minimum_salary ||
+                          selectedJob.maximum_salary}
                     </p>
                   </div>
                 )}
@@ -253,18 +269,18 @@ export default function UserPage() {
                     Job Description
                   </h3>
                   <p className="text-gray-700 whitespace-pre-wrap">
-                    {selectedJob.jobDescription}
+                    {selectedJob.job_description}
                   </p>
                 </div>
 
                 {/* Profile Requirements */}
-                {selectedJob.profileRequirements && (
+                {selectedJob.fields && (
                   <div className="mt-8">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4">
                       Profile Requirements
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {Object.entries(selectedJob.profileRequirements)
+                      {Object.entries(selectedJob.fields)
                         .filter(([, value]) => value !== "Off")
                         .map(([key, value]) => (
                           <div
