@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Dialog,
@@ -26,15 +26,25 @@ import { toast } from "sonner";
 export default function AdminPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const supabase = createClient();
-  const [jobs, setJobs] = useState(() => {
-    if (typeof window !== "undefined") {
-      const savedJobs = localStorage.getItem("jobPostings");
-      if (savedJobs) {
-        return JSON.parse(savedJobs);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      const { data, error } = await supabase.from("jobs").select("*");
+
+      if (error) {
+        console.error("Error fetching jobs:", error);
+      } else {
+        console.log("Fetched jobs:", data);
+        setJobs(data);
       }
-    }
-    return [];
-  });
+
+      setLoading(false);
+    };
+
+    fetchJobs();
+  }, [supabase]);
   const [formData, setFormData] = useState({
     jobName: "",
     jobType: "",
@@ -107,7 +117,7 @@ export default function AdminPage() {
       fields: formData.profileRequirements,
     };
 
-    const { data, error } = await supabase.from("jobs").insert(newJob);
+    const { data, error } = await supabase.from("jobs").insert(newJob).select();
 
     if (error) {
       console.error(error);
@@ -116,18 +126,23 @@ export default function AdminPage() {
 
     toast.success("Job published successfully!");
 
-    // setJobs([...jobs, data[0]]);
+    setJobs([...jobs, data[0]]);
     setIsDialogOpen(false);
     resetFormData();
   };
 
-  const handleDeleteJob = (jobId) => {
+  const handleDeleteJob = async (jobId) => {
+    const { error } = await supabase.from("jobs").delete().eq("id", jobId);
+
+    if (error) {
+      console.error("Error deleting job:", error);
+      toast.error("Failed to delete job");
+      return;
+    }
+
     const updatedJobs = jobs.filter((job) => job.id !== jobId);
     setJobs(updatedJobs);
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem("jobPostings", JSON.stringify(updatedJobs));
-    }
+    toast.success("Job deleted successfully!");
   };
 
   return (
@@ -199,17 +214,17 @@ export default function AdminPage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
                           <h3 className="text-xl font-semibold text-gray-800">
-                            {job.jobName}
+                            {job.job_name}
                           </h3>
                           <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded">
-                            {job.jobType}
+                            {job.job_type}
                           </span>
                         </div>
                         <p className="text-gray-600 mb-3 line-clamp-2">
-                          {job.jobDescription}
+                          {job.job_description}
                         </p>
                         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                          {job.candidateNeeded && (
+                          {job.number_of_candidate && (
                             <div className="flex items-center gap-1">
                               <svg
                                 className="w-4 h-4"
@@ -225,11 +240,11 @@ export default function AdminPage() {
                                 />
                               </svg>
                               <span>
-                                {job.candidateNeeded} candidates needed
+                                {job.number_of_candidate} candidates needed
                               </span>
                             </div>
                           )}
-                          {(job.minSalary || job.maxSalary) && (
+                          {(job.minimum_salary || job.maximum_salary) && (
                             <div className="flex items-center gap-1">
                               <svg
                                 className="w-4 h-4"
@@ -245,9 +260,9 @@ export default function AdminPage() {
                                 />
                               </svg>
                               <span>
-                                {job.minSalary && job.maxSalary
-                                  ? `${job.minSalary} - ${job.maxSalary}`
-                                  : job.minSalary || job.maxSalary}
+                                {job.minimum_salary && job.maximum_salary
+                                  ? `${job.minimum_salary} - ${job.maximum_salary}`
+                                  : job.minimum_salary || job.maximum_salary}
                               </span>
                             </div>
                           )}
