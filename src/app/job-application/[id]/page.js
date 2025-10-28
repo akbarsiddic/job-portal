@@ -2,30 +2,56 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 export default function JobApplicationPage() {
   const [applications, setApplications] = useState([]);
+  const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [user, setUser] = useState(null);
   const supabase = createClient();
   const params = useParams();
+  const router = useRouter();
 
   useEffect(() => {
-    fetchApplications();
+    if (typeof window !== "undefined") {
+      const storedUser = localStorage.getItem("user");
+      setUser(storedUser);
+    }
+    fetchJobAndApplications();
   }, []);
 
-  async function fetchApplications() {
+  async function fetchJobAndApplications() {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("job_applications")
-        .select("*")
-        .eq("job_id", params.id);
+      
+      const [applicationsResult, jobResult] = await Promise.all([
+        supabase
+          .from("job_applications")
+          .select("*")
+          .eq("job_id", params.id),
+        supabase
+          .from("jobs")
+          .select("*")
+          .eq("id", params.id)
+          .single()
+      ]);
 
-      if (error) throw error;
-      setApplications(data || []);
+      if (applicationsResult.error) throw applicationsResult.error;
+      if (jobResult.error) throw jobResult.error;
+
+      setApplications(applicationsResult.data || []);
+      setJob(jobResult.data);
     } catch (error) {
-      console.error("Error fetching applications:", error);
+      console.error("Error fetching data:", error);
     } finally {
       setLoading(false);
     }
@@ -49,28 +75,99 @@ export default function JobApplicationPage() {
     }
   };
 
+  const handleSignOut = () => {
+    localStorage.clear();
+    document.cookie = "user=; path=/; max-age=0";
+    setUser(null);
+    router.push("/login");
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-gray-600">Loading applications...</div>
+      <div className="flex flex-col min-h-screen">
+        <nav className="w-full flex items-center justify-between px-8 py-4 shadow-sm bg-white border-b">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-gray-800">Job Portal</h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <span className="text-gray-600 text-sm">
+              Welcome, {user || "Guest"}
+            </span>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src="/avatar.png" alt="user" />
+                  <AvatarFallback>
+                    {user ? user.charAt(0).toUpperCase() : "G"}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </nav>
+
+        <div className="min-h-screen bg-gray-50 p-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-gray-600">Loading applications...</div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
-          <button className="hover:text-gray-900">Job list</button>
-          <span>&gt;</span>
-          <span className="text-gray-900">Manage Candidate</span>
+    <div className="flex flex-col min-h-screen">
+      <nav className="w-full flex items-center justify-between px-8 py-4 shadow-sm bg-white border-b">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-gray-800">Job Portal</h1>
         </div>
 
-        {/* Title */}
-        <h1 className="text-2xl font-semibold mb-6">Front End Developer</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-600 text-sm">
+            Welcome, {user || "Guest"}
+          </span>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="cursor-pointer">
+                <AvatarImage src="/avatar.png" alt="user" />
+                <AvatarFallback>
+                  {user ? user.charAt(0).toUpperCase() : "G"}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={handleSignOut}>
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </nav>
+
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-6">
+            <button 
+              onClick={() => router.push("/job-portal")}
+              className="hover:text-gray-900"
+            >
+              Job list
+            </button>
+            <span>&gt;</span>
+            <span className="text-gray-900">Manage Candidate</span>
+          </div>
+
+          {/* Title */}
+          <h1 className="text-2xl font-semibold mb-6">{job?.job_name || "Job"}</h1>
 
         {/* Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -177,6 +274,7 @@ export default function JobApplicationPage() {
               </tbody>
             </table>
           </div>
+        </div>
         </div>
       </div>
     </div>
