@@ -7,7 +7,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -142,14 +148,6 @@ export default function LoginPage() {
               </svg>
               <span className="font-medium">Masuk dengan Google</span>
             </Button>
-
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-800 font-semibold mb-2">
-                Test Credentials:
-              </p>
-              <p className="text-xs text-blue-700">Admin: admin / admin123</p>
-              <p className="text-xs text-blue-700">User: user / user</p>
-            </div>
           </CardContent>
         </Card>
       </div>
