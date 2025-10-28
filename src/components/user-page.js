@@ -1,4 +1,9 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+
 export default function UserPage() {
+  const router = useRouter();
   const jobData = {
     title: "UX Designer",
     company: "Rakamin",
@@ -178,7 +183,10 @@ export default function UserPage() {
                 </div>
 
                 {/* Apply Button */}
-                <button className="px-8 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold rounded-lg transition-colors shadow-sm">
+                <button
+                  className="px-8 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-semibold rounded-lg transition-colors shadow-sm"
+                  onClick={() => router.push("/apply")}
+                >
                   Apply
                 </button>
               </div>
